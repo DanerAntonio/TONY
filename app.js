@@ -1,11 +1,17 @@
 // app.js
 const express = require('express');
+const cors = require('cors');
 const mongoose = require('mongoose');
 const dotenv = require('dotenv');
 
 dotenv.config();
 
 const app = express();
+app.use(cors({
+  origin: ['http://127.0.0.1:5500', 'https://tony-m6cg.onrender.com'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
 
 // Middleware
 app.use(express.json());
