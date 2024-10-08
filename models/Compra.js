@@ -1,3 +1,5 @@
+const mongoose = require('mongoose');
+
 const compraSchema = new mongoose.Schema({
   proveedor: { type: mongoose.Schema.Types.ObjectId, ref: 'Proveedor', required: true },
   fecha: { type: Date, default: Date.now },

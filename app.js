@@ -1,6 +1,5 @@
 // app.js
-res.setHeader('X-Content-Type-Options', 'nosniff');
-res.removeHeader('X-Powered-By');
+
 const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
@@ -17,6 +16,12 @@ app.use(cors({
 
 // Middleware
 app.use(express.json());
+
+app.use((req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.removeHeader('X-Powered-By');
+  next();
+});
 
 // Conexión a la base de datos
 mongoose.connect(process.env.MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true })
