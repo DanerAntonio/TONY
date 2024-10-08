@@ -6,14 +6,25 @@ const Producto = require('../models/Producto');
 exports.crearCompra = async (req, res) => {
   try {
     const { proveedor, detalles } = req.body;
-    let total = 0;
+    let subtotal = 0;
+    const iva = 0.12; // 12% IVA
 
-    // Calcular el total de la compra
+    // Calcular el subtotal de la compra
     for (let detalle of detalles) {
-      total += detalle.cantidad * detalle.precioUnitario;
+      subtotal += detalle.cantidad * detalle.precioUnitario;
     }
 
-    const nuevaCompra = new Compra({ proveedor, total });
+    const ivaTotal = subtotal * iva;
+    const total = subtotal + ivaTotal;
+
+    const nuevaCompra = new Compra({
+      proveedor,
+      subtotal,
+      iva: ivaTotal,
+      total,
+      fecha: new Date(),
+      estado: 'Pendiente'
+    });
     await nuevaCompra.save();
 
     // Crear los detalles de la compra y actualizar el stock de los productos
@@ -23,7 +34,7 @@ exports.crearCompra = async (req, res) => {
         producto: detalle.producto,
         cantidad: detalle.cantidad,
         precioUnitario: detalle.precioUnitario,
-        total: detalle.cantidad * detalle.precioUnitario
+        subtotal: detalle.cantidad * detalle.precioUnitario
       });
       await nuevoDetalle.save();
 
@@ -31,7 +42,12 @@ exports.crearCompra = async (req, res) => {
       await Producto.findByIdAndUpdate(detalle.producto, {
         $inc: { stock: detalle.cantidad }
       });
+
+      // Agregar el detalle a la compra
+      nuevaCompra.detalles.push(nuevoDetalle._id);
     }
+
+    await nuevaCompra.save();
 
     res.status(201).json(nuevaCompra);
   } catch (error) {
@@ -50,12 +66,27 @@ exports.obtenerCompras = async (req, res) => {
 
 exports.obtenerCompra = async (req, res) => {
   try {
-    const compra = await Compra.findById(req.params.id).populate('proveedor');
+    const compra = await Compra.findById(req.params.id)
+      .populate('proveedor')
+      .populate({
+        path: 'detalles',
+        populate: { path: 'producto' }
+      });
+    
     if (!compra) return res.status(404).json({ message: 'Compra no encontrada' });
     
-    const detalles = await DetalleCompra.find({ compra: compra._id }).populate('producto');
-    
-    res.json({ compra, detalles });
+    res.json({
+      compra: {
+        _id: compra._id,
+        fecha: compra.fecha,
+        proveedor: compra.proveedor,
+        estado: compra.estado,
+        subtotal: compra.subtotal,
+        iva: compra.iva,
+        total: compra.total
+      },
+      detalles: compra.detalles
+    });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

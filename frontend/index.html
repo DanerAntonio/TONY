@@ -369,8 +369,7 @@
                     body: JSON.stringify(datos)
                 });
                 if (!respuesta.ok) {
-                    const textoError = await respuesta.text();
-                    throw new Error(`Error HTTP! estado: ${respuesta.status}, mensaje: ${textoError}`);
+                    throw new Error(`Error HTTP! estado: ${respuesta.status}`);
                 }
                 return await respuesta.json();
             } catch (error) {
@@ -456,28 +455,28 @@
             });
             crearPaginacion(productos.length, 'paginacionProductos');
         }
+
         async function cargarCompras() {
-    const compras = await obtenerDatos('compras');
-    if (!compras) return;
-    console.log('Datos de compras cargados:', compras); // Agregamos este log para depuración
-    const tabla = document.getElementById('tablaCompras').getElementsByTagName('tbody')[0];
-    tabla.innerHTML = '';
-    compras.slice((paginaActual - 1) * elementosPorPagina, paginaActual * elementosPorPagina).forEach(compra => {
-        const fila = tabla.insertRow();
-        fila.innerHTML = `
-            <td>${compra._id || 'N/A'}</td>
-            <td>${compra.fecha ? new Date(compra.fecha).toLocaleString() : 'N/A'}</td>
-            <td>${compra.proveedor && compra.proveedor.nombre ? compra.proveedor.nombre : 'N/A'}</td>
-            <td>${compra.total ? `$${compra.total.toFixed(2)}` : 'N/A'}</td>
-            <td>${compra.estado || 'N/A'}</td>
-            <td>
-                <button class="btn btn-sm btn-info" onclick="verDetalleCompra('${compra._id}')">Ver Detalle</button>
-                <button class="btn btn-sm btn-warning" onclick="anularCompra('${compra._id}')" ${compra.estado === 'Anulada' ? 'disabled' : ''}>Anular</button>
-            </td>
-        `;
-    });
-    crearPaginacion(compras.length, 'paginacionCompras');
-}
+            const compras = await obtenerDatos('compras');
+            if (!compras) return;
+            console.log('Datos de compras cargados:', compras); // Log para depuración
+            const tabla = document.getElementById('tablaCompras').getElementsByTagName('tbody')[0];
+            tabla.innerHTML = '';
+            compras.forEach(compra => {
+                const fila = tabla.insertRow();
+                fila.innerHTML = `
+                    <td>${compra._id}</td>
+                    <td>${new Date(compra.fecha).toLocaleString()}</td>
+                    <td>${compra.proveedor ? compra.proveedor.nombre : 'N/A'}</td>
+                    <td>$${compra.total.toFixed(2)}</td>
+                    <td>${compra.estado}</td>
+                    <td>
+                        <button class="btn btn-sm btn-info" onclick="verDetalleCompra('${compra._id}')">Ver Detalle</button>
+                        <button class="btn btn-sm btn-warning" onclick="anularCompra('${compra._id}')" ${compra.estado === 'Anulada' ? 'disabled' : ''}>Anular</button>
+                    </td>
+                `;
+            });
+        }
 
         async function cargarProveedores() {
             const proveedores = await obtenerDatos('proveedores');
@@ -709,97 +708,116 @@
         }
 
         async function guardarCompra() {
-    const proveedor = document.getElementById('proveedorCompra').value;
-    if (!proveedor) {
-        Swal.fire('Error', 'Debe seleccionar un proveedor', 'error');
-        return;
-    }
-    if (productosCompra.length === 0) {
-        Swal.fire('Error', 'Debe agregar al menos un producto a la compra', 'error');
-        return;
-    }
+            const proveedor = document.getElementById('proveedorCompra').value;
+            if (!proveedor) {
+                Swal.fire('Error', 'Debe seleccionar un proveedor', 'error');
+                return;
+            }
+            if (productosCompra.length === 0) {
+                Swal.fire('Error', 'Debe agregar al menos un producto a la compra', 'error');
+                return;
+            }
 
-    const compra = {
-        proveedor,
-        fecha: new Date().toISOString(),
-        detalles: productosCompra.map(p => ({
-            producto: p.producto,
-            cantidad: p.cantidad,
-            precioUnitario: p.precioUnitario
-        })),
-        subtotal: parseFloat(document.getElementById('subtotalCompra').textContent),
-        iva: parseFloat(document.getElementById('ivaCompra').textContent),
-        total: parseFloat(document.getElementById('totalCompra').textContent),
-        estado: 'Pendiente'
-    };
+            const subtotal = productosCompra.reduce((total, p) => total + p.cantidad * p.precioUnitario, 0);
+            const iva = subtotal * IVA;
+            const total = subtotal + iva;
 
-    const resultado = await enviarDatos('compras', compra);
-    if (resultado) {
-        Swal.fire('Éxito', 'Compra guardada correctamente', 'success');
-        bootstrap.Modal.getInstance(document.getElementById('modalCompra')).hide();
-        productosCompra = [];
-        cargarCompras();
-    }
-}
+            const compra = {
+                proveedor,
+                fecha: new Date().toISOString(),
+                detalles: productosCompra.map(p => ({
+                    producto: p.producto,
+                    cantidad: p.cantidad,
+                    precioUnitario: p.precioUnitario
+                })),
+                subtotal,
+                iva,
+                total,
+                estado: 'Pendiente'
+            };
 
+            const resultado = await enviarDatos('compras', compra);
+            if (resultado) {
+                Swal.fire('Éxito', 'Compra guardada correctamente', 'success');
+                bootstrap.Modal.getInstance(document.getElementById('modalCompra')).hide();
+                productosCompra = [];
+                cargarCompras();
+            }
+        }
 
 
 
         async function verDetalleCompra(id) {
-    const compra = await obtenerDatos(`compras/${id}`);
-    console.log('Datos de la compra:', compra); // Log para depuración
+    try {
+        const respuesta = await obtenerDatos(`compras/${id}`);
+        console.log('Datos de la compra:', respuesta);
 
-    if (!compra) {
-        Swal.fire('Error', 'No se pudo cargar los detalles de la compra', 'error');
-        return;
-    }
-
-    const formatearPrecio = (precio) => {
-        if (precio != null && !isNaN(precio)) {
-            return `$${parseFloat(precio).toFixed(2)}`;
+        if (!respuesta || !respuesta.compra) {
+            throw new Error('No se pudo cargar los detalles de la compra');
         }
-        return 'No disponible';
-    };
 
-    let detalleHTML = `
-        <h3>Compra #${compra._id || 'No disponible'}</h3>
-        <p><strong>Fecha:</strong> ${compra.fecha ? new Date(compra.fecha).toLocaleString() : 'No disponible'}</p>
-        <p><strong>Proveedor:</strong> ${compra.proveedor ? compra.proveedor.nombre : 'No disponible'}</p>
-        <p><strong>Estado:</strong> ${compra.estado || 'No disponible'}</p>
-        <h4>Productos:</h4>
-        <table class="table">
-            <thead>
-                <tr>
-                    <th>Producto</th>
-                    <th>Cantidad</th>
-                    <th>Precio Unitario</th>
-                    <th>Subtotal</th>
-                </tr>
-            </thead>
-            <tbody>
-                ${compra.detalles && Array.isArray(compra.detalles) ? compra.detalles.map(d => `
+        const compra = respuesta.compra;
+        const detalles = respuesta.detalles || [];
+
+        const formatearPrecio = (precio) => {
+            return precio != null && !isNaN(precio) ? `$${parseFloat(precio).toFixed(2)}` : 'No disponible';
+        };
+
+        const formatearFecha = (fecha) => {
+            return fecha ? new Date(fecha).toLocaleString() : 'No disponible';
+        };
+
+        // Calcular subtotal
+        let subtotal = detalles.reduce((total, d) => total + (d.cantidad * d.precioUnitario), 0);
+        
+        // Calcular IVA (asumiendo 12%)
+        let iva = subtotal * 0.12;
+        
+        // Calcular total
+        let total = subtotal + iva;
+
+        let detalleHTML = `
+            <h3>Compra #${compra._id || 'No disponible'}</h3>
+            <p><strong>Fecha:</strong> ${formatearFecha(compra.fecha)}</p>
+            <p><strong>Proveedor:</strong> ${compra.proveedor ? compra.proveedor.nombre : 'No disponible'}</p>
+            <p><strong>Estado:</strong> ${compra.estado || 'No disponible'}</p>
+            <h4>Productos:</h4>
+            <table class="table">
+                <thead>
                     <tr>
-                        <td>${d.producto ? d.producto.nombre : 'No disponible'}</td>
-                        <td>${d.cantidad || 'No disponible'}</td>
-                        <td>${formatearPrecio(d.precioUnitario)}</td>
-                        <td>${formatearPrecio(d.cantidad * d.precioUnitario)}</td>
+                        <th>Producto</th>
+                        <th>Cantidad</th>
+                        <th>Precio Unitario</th>
+                        <th>Subtotal</th>
                     </tr>
-                `).join('') : '<tr><td colspan="4">No hay detalles disponibles</td></tr>'}
-            </tbody>
-        </table>
-        <p><strong>Subtotal:</strong> ${formatearPrecio(compra.subtotal)}</p>
-        <p><strong>IVA:</strong> ${formatearPrecio(compra.iva)}</p>
-        <p><strong>Total:</strong> ${formatearPrecio(compra.total)}</p>
-    `;
+                </thead>
+                <tbody>
+                    ${detalles.length > 0 ? detalles.map(d => `
+                        <tr>
+                            <td>${d.producto ? d.producto.nombre : 'No disponible'}</td>
+                            <td>${d.cantidad || 'No disponible'}</td>
+                            <td>${formatearPrecio(d.precioUnitario)}</td>
+                            <td>${formatearPrecio(d.cantidad * d.precioUnitario)}</td>
+                        </tr>
+                    `).join('') : '<tr><td colspan="4">No hay detalles disponibles</td></tr>'}
+                </tbody>
+            </table>
+            <p><strong>Subtotal:</strong> ${formatearPrecio(subtotal)}</p>
+            <p><strong>IVA (12%):</strong> ${formatearPrecio(iva)}</p>
+            <p><strong>Total:</strong> ${formatearPrecio(total)}</p>
+        `;
 
-    Swal.fire({
-        title: 'Detalle de Compra',
-        html: detalleHTML,
-        width: '80%',
-        confirmButtonText: 'Cerrar'
-    });
+        Swal.fire({
+            title: 'Detalle de Compra',
+            html: detalleHTML,
+            width: '80%',
+            confirmButtonText: 'Cerrar'
+        });
+    } catch (error) {
+        console.error('Error al cargar los detalles de la compra:', error);
+        Swal.fire('Error', 'No se pudo cargar los detalles de la compra', 'error');
+    }
 }
-
         async function anularCompra(id) {
             const resultado = await Swal.fire({
                 title: '¿Estás seguro?',

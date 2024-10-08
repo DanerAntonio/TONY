@@ -1,4 +1,6 @@
 // app.js
+res.setHeader('X-Content-Type-Options', 'nosniff');
+res.removeHeader('X-Powered-By');
 const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
