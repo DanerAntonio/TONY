@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PetShop Manager</title>
+    <title>Gestor de PetShop</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11.0.19/dist/sweetalert2.min.css" rel="stylesheet">
     <style>
@@ -41,23 +41,23 @@
 <body>
     <nav class="navbar navbar-expand-lg navbar-dark mb-4">
         <div class="container">
-            <a class="navbar-brand" href="#">🐾 PetShop Manager</a>
+            <a class="navbar-brand" href="#">🐾 Gestor de PetShop</a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav">
                     <li class="nav-item">
-                        <a class="nav-link" href="#" onclick="showSection('productos')">Productos</a>
+                        <a class="nav-link" href="#" onclick="mostrarSeccion('productos')">Productos</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#" onclick="showSection('compras')">Compras</a>
+                        <a class="nav-link" href="#" onclick="mostrarSeccion('compras')">Compras</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#" onclick="showSection('proveedores')">Proveedores</a>
+                        <a class="nav-link" href="#" onclick="mostrarSeccion('proveedores')">Proveedores</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#" onclick="showSection('clientes')">Clientes</a>
+                        <a class="nav-link" href="#" onclick="mostrarSeccion('clientes')">Clientes</a>
                     </li>
                 </ul>
             </div>
@@ -67,7 +67,7 @@
     <div class="container">
         <div id="productos" class="section">
             <h2 class="mb-4">Gestión de Productos</h2>
-            <button class="btn btn-primary mb-3" onclick="showModal('producto')">Nuevo Producto</button>
+            <button class="btn btn-primary mb-3" onclick="mostrarModal('producto')">Nuevo Producto</button>
             <div class="card">
                 <div class="card-body">
                     <div class="mb-3">
@@ -95,7 +95,7 @@
 
         <div id="compras" class="section" style="display: none;">
             <h2 class="mb-4">Gestión de Compras</h2>
-            <button class="btn btn-primary mb-3" onclick="showModal('compra')">Nueva Compra</button>
+            <button class="btn btn-primary mb-3" onclick="mostrarModal('compra')">Nueva Compra</button>
             <div class="card">
                 <div class="card-body">
                     <div class="mb-3">
@@ -105,6 +105,7 @@
                         <table class="table table-striped" id="tablaCompras">
                             <thead>
                                 <tr>
+                                    <th>ID</th>
                                     <th>Fecha</th>
                                     <th>Proveedor</th>
                                     <th>Total</th>
@@ -124,7 +125,7 @@
 
         <div id="proveedores" class="section" style="display: none;">
             <h2 class="mb-4">Gestión de Proveedores</h2>
-            <button class="btn btn-primary mb-3" onclick="showModal('proveedor')">Nuevo Proveedor</button>
+            <button class="btn btn-primary mb-3" onclick="mostrarModal('proveedor')">Nuevo Proveedor</button>
             <div class="card">
                 <div class="card-body">
                     <div class="mb-3">
@@ -152,7 +153,7 @@
 
         <div id="clientes" class="section" style="display: none;">
             <h2 class="mb-4">Gestión de Clientes</h2>
-            <button class="btn btn-primary mb-3" onclick="showModal('cliente')">Nuevo Cliente</button>
+            <button class="btn btn-primary mb-3" onclick="mostrarModal('cliente')">Nuevo Cliente</button>
             <div class="card">
                 <div class="card-body">
                     <div class="mb-3">
@@ -179,7 +180,7 @@
         </div>
     </div>
 
-    <!-- Modales para crear/editar -->
+    <!-- Modales -->
     <div class="modal fade" id="modalProducto" tabindex="-1">
         <div class="modal-dialog">
             <div class="modal-content">
@@ -216,12 +217,11 @@
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Compra</h5>
+                    <h5 class="modal-title">Nueva Compra</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
                     <form id="formCompra">
-                        <input type="hidden" id="compraId">
                         <div class="mb-3">
                             <label for="proveedorCompra" class="form-label">Proveedor</label>
                             <select class="form-select" id="proveedorCompra" required></select>
@@ -231,13 +231,15 @@
                         </div>
                         <button type="button" class="btn btn-secondary mt-2" onclick="agregarProductoCompra()">Agregar Producto</button>
                         <div class="mt-3">
+                            <strong>Subtotal: $<span id="subtotalCompra">0.00</span></strong><br>
+                            <strong>IVA (12%): $<span id="ivaCompra">0.00</span></strong><br>
                             <strong>Total: $<span id="totalCompra">0.00</span></strong>
                         </div>
                     </form>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-                    <button type="button" class="btn btn-primary" onclick="guardarCompra()">Guardar</button>
+                    <button type="button" class="btn btn-primary" onclick="guardarCompra()">Guardar Compra</button>
                 </div>
             </div>
         </div>
@@ -305,6 +307,7 @@
                             <label for="telefonoCliente" class="form-label">Teléfono</label>
                             <input type="tel" class="form-control" id="telefonoCliente" required>
                         </div>
+                
                         <div class="mb-3">
                             <label for="direccionCliente" class="form-label">Dirección</label>
                             <input type="text" class="form-control" id="direccionCliente" required>
@@ -323,106 +326,125 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.0.19/dist/sweetalert2.all.min.js"></script>
     <script>
         const API_URL = 'https://tony-m6cg.onrender.com/api';
-        let currentSection = 'productos';
-        const itemsPerPage = 10;
-        let currentPage = 1;
+        let seccionActual = 'productos';
+        const elementosPorPagina = 10;
+        let paginaActual = 1;
+        let productosCompra = [];
+        const IVA = 0.12; // 12% de IVA
 
         // Funciones de utilidad
-        function showSection(section) {
+        function mostrarSeccion(seccion) {
             document.querySelectorAll('.section').forEach(el => el.style.display = 'none');
-            document.getElementById(section).style.display = 'block';
-            currentSection = section;
-            currentPage = 1;
-            loadData();
+            document.getElementById(seccion).style.display = 'block';
+            seccionActual = seccion;
+            paginaActual = 1;
+            cargarDatos();
         }
 
-        function showModal(type) {
-            const modal = new bootstrap.Modal(document.getElementById(`modal${type.charAt(0).toUpperCase() + type.slice(1)}`));
+        function mostrarModal(tipo) {
+            const modal = new bootstrap.Modal(document.getElementById(`modal${tipo.charAt(0).toUpperCase() + tipo.slice(1)}`));
             modal.show();
         }
 
-        async function fetchData(endpoint) {
+        async function obtenerDatos(endpoint) {
             try {
-                const response = await fetch(`${API_URL}/${endpoint}`);
-                if (!response.ok) throw new Error('Network response was not ok');
-                return await response.json();
+                const respuesta = await fetch(`${API_URL}/${endpoint}`);
+                if (!respuesta.ok) {
+                    const textoError = await respuesta.text();
+                    throw new Error(`Error HTTP! estado: ${respuesta.status}, mensaje: ${textoError}`);
+                }
+                return await respuesta.json();
             } catch (error) {
-                console.error('Error fetching data:', error);
-                Swal.fire('Error', 'Hubo un problema al cargar los datos', 'error');
+                console.error('Error al obtener datos:', error);
+                Swal.fire('Error', `Hubo un problema al cargar los datos: ${error.message}`, 'error');
+                return null;
             }
         }
 
-        async function postData(endpoint, data) {
+        async function enviarDatos(endpoint, datos) {
             try {
-                const response = await fetch(`${API_URL}/${endpoint}`, {
+                const respuesta = await fetch(`${API_URL}/${endpoint}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(data)
+                    body: JSON.stringify(datos)
                 });
-                if (!response.ok) throw new Error('Network response was not ok');
-                return await response.json();
+                if (!respuesta.ok) {
+                    const textoError = await respuesta.text();
+                    throw new Error(`Error HTTP! estado: ${respuesta.status}, mensaje: ${textoError}`);
+                }
+                return await respuesta.json();
             } catch (error) {
-                console.error('Error posting data:', error);
-                Swal.fire('Error', 'Hubo un problema al guardar los datos', 'error');
+                console.error('Error al enviar datos:', error);
+                Swal.fire('Error', `Hubo un problema al guardar los datos: ${error.message}`, 'error');
+                return null;
             }
         }
 
-        async function putData(endpoint, id, data) {
+        async function actualizarDatos(endpoint, id, datos) {
             try {
-                const response = await fetch(`${API_URL}/${endpoint}/${id}`, {
+                const respuesta = await fetch(`${API_URL}/${endpoint}/${id}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(data)
+                    body: JSON.stringify(datos)
                 });
-                if (!response.ok) throw new Error('Network response was not ok');
-                return await response.json();
+                if (!respuesta.ok) {
+                    const textoError = await respuesta.text();
+                    throw new Error(`Error HTTP! estado: ${respuesta.status}, mensaje: ${textoError}`);
+                }
+                return await respuesta.json();
             } catch (error) {
-                console.error('Error updating data:', error);
-                Swal.fire('Error', 'Hubo un problema al actualizar los datos', 'error');
+                console.error('Error al actualizar datos:', error);
+                Swal.fire('Error', `Hubo un problema al actualizar los datos: ${error.message}`, 'error');
+                return null;
             }
         }
 
-        async function deleteData(endpoint, id) {
+        async function eliminarDatos(endpoint, id) {
             try {
-                const response = await fetch(`${API_URL}/${endpoint}/${id}`, { method: 'DELETE' });
-                if (!response.ok) throw new Error('Network response was not ok');
-                return await response.json();
+                const respuesta = await fetch(`${API_URL}/${endpoint}/${id}`, { method: 'DELETE' });
+                if (!respuesta.ok) {
+                    const textoError = await respuesta.text();
+                    throw new Error(`Error HTTP! estado: ${respuesta.status}, mensaje: ${textoError}`);
+                }
+                return await respuesta.json();
             } catch (error) {
-                console.error('Error deleting data:', error);
-                Swal.fire('Error', 'Hubo un problema al eliminar los datos', 'error');
+                console.error('Error al eliminar datos:', error);
+                Swal.fire('Error', `Hubo un problema al eliminar los datos: ${error.message}`, 'error');
+                return null;
             }
         }
 
-        function createPagination(totalItems, containerId) {
-            const totalPages = Math.ceil(totalItems / itemsPerPage);
-            const container = document.getElementById(containerId);
-            container.innerHTML = '';
+        function crearPaginacion(totalElementos, contenedorId) {
+            const totalPaginas = Math.ceil(totalElementos / elementosPorPagina);
+            const contenedor = document.getElementById(contenedorId);
+            contenedor.innerHTML = '';
 
-            for (let i = 1; i <= totalPages; i++) {
+            for (let i = 1; i <= totalPaginas; i++) {
                 const li = document.createElement('li');
-                li.className = `page-item ${i === currentPage ? 'active' : ''}`;
+                li.className = `page-item ${i === paginaActual ? 'active' : ''}`;
                 const a = document.createElement('a');
                 a.className = 'page-link';
                 a.href = '#';
                 a.textContent = i;
                 a.onclick = (e) => {
                     e.preventDefault();
-                    currentPage = i;
-                    loadData();
+                    paginaActual = i;
+                    cargarDatos();
                 };
                 li.appendChild(a);
-                container.appendChild(li);
+                contenedor.appendChild(li);
             }
         }
 
         // Funciones específicas para cada sección
-        async function loadProductos() {
-            const productos = await fetchData('productos');
+        async function cargarProductos() {
+            const productos = await obtenerDatos('productos');
+            if (!productos) return;
             const tabla = document.getElementById('tablaProductos').getElementsByTagName('tbody')[0];
             tabla.innerHTML = '';
-            productos.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).forEach(producto => {
-                const row = tabla.insertRow();
-                row.innerHTML = `
+            productos.slice((paginaActual - 1) * elementosPorPagina, paginaActual * elementosPorPagina).forEach(producto => {
+                const fila = tabla.insertRow();
+                fila.innerHTML = `
                     <td>${producto.nombre}</td>
                     <td>$${producto.precio.toFixed(2)}</td>
                     <td>${producto.stock}</td>
@@ -432,18 +454,20 @@
                     </td>
                 `;
             });
-            createPagination(productos.length, 'paginacionProductos');
+            crearPaginacion(productos.length, 'paginacionProductos');
         }
 
-        async function loadCompras() {
-            const compras = await fetchData('compras');
+        async function cargarCompras() {
+            const compras = await obtenerDatos('compras');
+            if (!compras) return;
             const tabla = document.getElementById('tablaCompras').getElementsByTagName('tbody')[0];
             tabla.innerHTML = '';
-            compras.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).forEach(compra => {
-                const row = tabla.insertRow();
-                row.innerHTML = `
-                    <td>${new Date(compra.fecha).toLocaleDateString()}</td>
-                    <td>${compra.proveedor.nombre}</td>
+            compras.slice((paginaActual - 1) * elementosPorPagina, paginaActual * elementosPorPagina).forEach(compra => {
+                const fila = tabla.insertRow();
+                fila.innerHTML = `
+                    <td>${compra.idCompra}</td>
+                    <td>${new Date(compra.fecha).toLocaleString()}</td>
+                    <td>${compra.proveedor ? compra.proveedor.nombre : 'N/A'}</td>
                     <td>$${compra.total.toFixed(2)}</td>
                     <td>${compra.estado}</td>
                     <td>
@@ -452,16 +476,17 @@
                     </td>
                 `;
             });
-            createPagination(compras.length, 'paginacionCompras');
+            crearPaginacion(compras.length, 'paginacionCompras');
         }
 
-        async function loadProveedores() {
-            const proveedores = await fetchData('proveedores');
+        async function cargarProveedores() {
+            const proveedores = await obtenerDatos('proveedores');
+            if (!proveedores) return;
             const tabla = document.getElementById('tablaProveedores').getElementsByTagName('tbody')[0];
             tabla.innerHTML = '';
-            proveedores.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).forEach(proveedor => {
-                const row = tabla.insertRow();
-                row.innerHTML = `
+            proveedores.slice((paginaActual - 1) * elementosPorPagina, paginaActual * elementosPorPagina).forEach(proveedor => {
+                const fila = tabla.insertRow();
+                fila.innerHTML = `
                     <td>${proveedor.nombre}</td>
                     <td>${proveedor.email}</td>
                     <td>${proveedor.telefono}</td>
@@ -471,16 +496,17 @@
                     </td>
                 `;
             });
-            createPagination(proveedores.length, 'paginacionProveedores');
+            crearPaginacion(proveedores.length, 'paginacionProveedores');
         }
 
-        async function loadClientes() {
-            const clientes = await fetchData('clientes');
+        async function cargarClientes() {
+            const clientes = await obtenerDatos('clientes');
+            if (!clientes) return;
             const tabla = document.getElementById('tablaClientes').getElementsByTagName('tbody')[0];
             tabla.innerHTML = '';
-            clientes.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).forEach(cliente => {
-                const row = tabla.insertRow();
-                row.innerHTML = `
+            clientes.slice((paginaActual - 1) * elementosPorPagina, paginaActual * elementosPorPagina).forEach(cliente => {
+                const fila = tabla.insertRow();
+                fila.innerHTML = `
                     <td>${cliente.nombreCliente}</td>
                     <td>${cliente.email}</td>
                     <td>${cliente.telefono}</td>
@@ -490,22 +516,22 @@
                     </td>
                 `;
             });
-            createPagination(clientes.length, 'paginacionClientes');
+            crearPaginacion(clientes.length, 'paginacionClientes');
         }
 
-        function loadData() {
-            switch (currentSection) {
+        function cargarDatos() {
+            switch (seccionActual) {
                 case 'productos':
-                    loadProductos();
+                    cargarProductos();
                     break;
                 case 'compras':
-                    loadCompras();
+                    cargarCompras();
                     break;
                 case 'proveedores':
-                    loadProveedores();
+                    cargarProveedores();
                     break;
                 case 'clientes':
-                    loadClientes();
+                    cargarClientes();
                     break;
             }
         }
@@ -518,30 +544,31 @@
                 stock: parseInt(document.getElementById('stockProducto').value)
             };
             const id = document.getElementById('productoId').value;
-            let result;
+            let resultado;
             if (id) {
-                result = await putData('productos', id, producto);
+                resultado = await actualizarDatos('productos', id, producto);
             } else {
-                result = await postData('productos', producto);
+                resultado = await enviarDatos('productos', producto);
             }
-            if (result) {
+            if (resultado) {
                 Swal.fire('Éxito', 'Producto guardado correctamente', 'success');
                 bootstrap.Modal.getInstance(document.getElementById('modalProducto')).hide();
-                loadProductos();
+                cargarProductos();
             }
         }
 
         async function editarProducto(id) {
-            const producto = await fetchData(`productos/${id}`);
+            const producto = await obtenerDatos(`productos/${id}`);
+            if (!producto) return;
             document.getElementById('productoId').value = producto._id;
             document.getElementById('nombreProducto').value = producto.nombre;
             document.getElementById('precioProducto').value = producto.precio;
             document.getElementById('stockProducto').value = producto.stock;
-            showModal('producto');
+            mostrarModal('producto');
         }
 
         async function eliminarProducto(id) {
-            const result = await Swal.fire({
+            const resultado = await Swal.fire({
                 title: '¿Estás seguro?',
                 text: "No podrás revertir esta acción",
                 icon: 'warning',
@@ -550,32 +577,57 @@
                 cancelButtonColor: '#d33',
                 confirmButtonText: 'Sí, eliminar'
             });
-            if (result.isConfirmed) {
-                const response = await deleteData('productos', id);
-                if (response) {
+            if (resultado.isConfirmed) {
+                const respuesta = await eliminarDatos('productos', id);
+                if (respuesta) {
                     Swal.fire('Eliminado', 'El producto ha sido eliminado', 'success');
-                    loadProductos();
+                    cargarProductos();
                 }
             }
         }
 
         // Funciones para manejar compras
-        let productosCompra = [];
+        async function cargarProveedoresSelect() {
+            const proveedores = await obtenerDatos('proveedores');
+            if (!proveedores) return;
+            const select = document.getElementById('proveedorCompra');
+            select.innerHTML = '<option value="">Seleccione un proveedor</option>';
+            proveedores.forEach(proveedor => {
+                select.innerHTML += `<option value="${proveedor._id}">${proveedor.nombre}</option>`;
+            });
+        }
 
         async function agregarProductoCompra() {
-            const productos = await fetchData('productos');
+            const productos = await obtenerDatos('productos');
+            if (!productos) return;
             const { value: formValues } = await Swal.fire({
                 title: 'Agregar Producto a la Compra',
                 html:
-                    '<select id="swal-producto" class="swal2-input">' +
+                    '<select id="swal-producto" class="swal2-select">' +
+                    '<option value="">Seleccione un producto</option>' +
+                    '<option value="nuevo">Crear nuevo producto</option>' +
                     productos.map(p => `<option value="${p._id}">${p.nombre}</option>`).join('') +
                     '</select>' +
-                    '<input id="swal-cantidad" class="swal2-input" placeholder="Cantidad">' +
-                    '<input id="swal-precio" class="swal2-input" placeholder="Precio Unitario">',
+                    '<input id="swal-nombre" class="swal2-input" placeholder="Nombre del producto" type="text" style="display:none;">' +
+                    '<input id="swal-cantidad" class="swal2-input" placeholder="Cantidad" type="number">' +
+                    '<input id="swal-precio" class="swal2-input" placeholder="Precio Unitario" type="number" step="0.01">',
                 focusConfirm: false,
+                didOpen: () => {
+                    const select = document.getElementById('swal-producto');
+                    const nombreInput = document.getElementById('swal-nombre');
+                    select.addEventListener('change', (e) => {
+                        if (e.target.value === 'nuevo') {
+                            nombreInput.style.display = 'block';
+                        } else {
+                            nombreInput.style.display = 'none';
+                        }
+                    });
+                },
                 preConfirm: () => {
+                    const productoSelect = document.getElementById('swal-producto');
                     return {
-                        producto: document.getElementById('swal-producto').value,
+                        producto: productoSelect.value,
+                        nombre: document.getElementById('swal-nombre').value,
                         cantidad: document.getElementById('swal-cantidad').value,
                         precioUnitario: document.getElementById('swal-precio').value
                     }
@@ -583,87 +635,158 @@
             });
 
             if (formValues) {
-                const producto = productos.find(p => p._id === formValues.producto);
+                if (formValues.producto === 'nuevo') {
+                    if (!formValues.nombre) {
+                        Swal.fire('Error', 'Debe ingresar un nombre para el nuevo producto', 'error');
+                        return;
+                    }
+                    // Crear nuevo producto
+                    const nuevoProducto = await enviarDatos('productos', {
+                        nombre: formValues.nombre,
+                        precio: parseFloat(formValues.precioUnitario),
+                        stock: parseInt(formValues.cantida)
+                    });
+                    if (nuevoProducto) {
+                        formValues.producto = nuevoProducto._id;
+                    } else {
+                        return;
+                    }
+                }
+
+                const productoSeleccionado = productos.find(p => p._id === formValues.producto) || { nombre: formValues.nombre };
                 productosCompra.push({
                     producto: formValues.producto,
-                    nombre: producto.nombre,
+                    nombre: productoSeleccionado.nombre,
                     cantidad: parseInt(formValues.cantidad),
                     precioUnitario: parseFloat(formValues.precioUnitario)
                 });
-                actualizarProductosCompra();
+                actualizarTablaProductosCompra();
             }
         }
 
-        function actualizarProductosCompra() {
-            const container = document.getElementById('productosCompra');
-            container.innerHTML = '';
-            let total = 0;
-            productosCompra.forEach((p, index) => {
-                const subtotal = p.cantidad * p.precioUnitario;
-                total += subtotal;
-                container.innerHTML += `
-                    <div class="mb-2">
-                        <strong>${p.nombre}</strong> - 
-                        Cantidad: ${p.cantidad}, 
-                        Precio: $${p.precioUnitario.toFixed(2)}, 
-                        Subtotal: $${subtotal.toFixed(2)}
-                        <button type="button" class="btn btn-sm btn-danger" onclick="eliminarProductoCompra(${index})">Eliminar</button>
-                    </div>
-                `;
-            });
-            document.getElementById('totalCompra').textContent = total.toFixed(2);
+        function actualizarTablaProductosCompra() {
+            const contenedor = document.getElementById('productosCompra');
+            contenedor.innerHTML = `
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Producto</th>
+                            <th>Cantidad</th>
+                            <th>Precio Unitario</th>
+                            <th>Subtotal</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${productosCompra.map((p, index) => `
+                            <tr>
+                                <td>${p.nombre}</td>
+                                <td>${p.cantidad}</td>
+                                <td>$${p.precioUnitario.toFixed(2)}</td>
+                                <td>$${(p.cantidad * p.precioUnitario).toFixed(2)}</td>
+                                <td><button class="btn btn-sm btn-danger" onclick="eliminarProductoCompra(${index})">Eliminar</button></td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+            calcularTotalesCompra();
         }
 
         function eliminarProductoCompra(index) {
             productosCompra.splice(index, 1);
-            actualizarProductosCompra();
+            actualizarTablaProductosCompra();
+        }
+
+        function calcularTotalesCompra() {
+            const subtotal = productosCompra.reduce((total, p) => total + p.cantidad * p.precioUnitario, 0);
+            const iva = subtotal * IVA;
+            const total = subtotal + iva;
+
+            document.getElementById('subtotalCompra').textContent = subtotal.toFixed(2);
+            document.getElementById('ivaCompra').textContent = iva.toFixed(2);
+            document.getElementById('totalCompra').textContent = total.toFixed(2);
         }
 
         async function guardarCompra() {
+            const proveedor = document.getElementById('proveedorCompra').value;
+            if (!proveedor) {
+                Swal.fire('Error', 'Debe seleccionar un proveedor', 'error');
+                return;
+            }
+            if (productosCompra.length === 0) {
+                Swal.fire('Error', 'Debe agregar al menos un producto a la compra', 'error');
+                return;
+            }
+
             const compra = {
-                proveedor: document.getElementById('proveedorCompra').value,
+                proveedor,
+                fecha: new Date().toISOString(),
                 detalles: productosCompra.map(p => ({
                     producto: p.producto,
                     cantidad: p.cantidad,
                     precioUnitario: p.precioUnitario
-                }))
+                })),
+                subtotal: parseFloat(document.getElementById('subtotalCompra').textContent),
+                iva: parseFloat(document.getElementById('ivaCompra').textContent),
+                total: parseFloat(document.getElementById('totalCompra').textContent),
+                estado: 'Pendiente'
             };
-            const result = await postData('compras', compra);
-            if (result) {
+
+            const resultado = await enviarDatos('compras', compra);
+            if (resultado) {
                 Swal.fire('Éxito', 'Compra guardada correctamente', 'success');
                 bootstrap.Modal.getInstance(document.getElementById('modalCompra')).hide();
                 productosCompra = [];
-                loadCompras();
+                cargarCompras();
             }
         }
 
         async function verDetalleCompra(id) {
-            const compra = await fetchData(`compras/${id}`);
-            let detalleHtml = `
-                <h3>Detalles de la Compra</h3>
-                <p><strong>Fecha:</strong> ${new Date(compra.compra.fecha).toLocaleDateString()}</p>
-                <p><strong>Proveedor:</strong> ${compra.compra.proveedor.nombre}</p>
-                <p><strong>Estado:</strong> ${compra.compra.estado}</p>
+            const compra = await obtenerDatos(`compras/${id}`);
+            if (!compra) return;
+
+            let detalleHTML = `
+                <h3>Compra #${compra.idCompra}</h3>
+                <p><strong>Fecha:</strong> ${new Date(compra.fecha).toLocaleString()}</p>
+                <p><strong>Proveedor:</strong> ${compra.proveedor ? compra.proveedor.nombre : 'N/A'}</p>
+                <p><strong>Estado:</strong> ${compra.estado}</p>
                 <h4>Productos:</h4>
-                <ul>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Producto</th>
+                            <th>Cantidad</th>
+                            <th>Precio Unitario</th>
+                            <th>Subtotal</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${compra.detalles.map(d => `
+                            <tr>
+                                <td>${d.producto ? d.producto.nombre : 'N/A'}</td>
+                                <td>${d.cantidad}</td>
+                                <td>$${d.precioUnitario.toFixed(2)}</td>
+                                <td>$${(d.cantidad * d.precioUnitario).toFixed(2)}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+                <p><strong>Subtotal:</strong> $${compra.subtotal.toFixed(2)}</p>
+                <p><strong>IVA:</strong> $${compra.iva.toFixed(2)}</p>
+                <p><strong>Total:</strong> $${compra.total.toFixed(2)}</p>
             `;
-            compra.detalles.forEach(detalle => {
-                detalleHtml += `
-                    <li>${detalle.producto.nombre} - Cantidad: ${detalle.cantidad}, Precio: $${detalle.precioUnitario.toFixed(2)}, Subtotal: $${detalle.total.toFixed(2)}</li>
-                `;
-            });
-            detalleHtml += `</ul><p><strong>Total:</strong> $${compra.compra.total.toFixed(2)}</p>`;
-            
+
             Swal.fire({
                 title: 'Detalle de Compra',
-                html: detalleHtml,
-                width: 600,
+                html: detalleHTML,
+                width: '80%',
                 confirmButtonText: 'Cerrar'
             });
         }
 
         async function anularCompra(id) {
-            const result = await Swal.fire({
+            const resultado = await Swal.fire({
                 title: '¿Estás seguro?',
                 text: "Esta acción anulará la compra",
                 icon: 'warning',
@@ -672,11 +795,11 @@
                 cancelButtonColor: '#d33',
                 confirmButtonText: 'Sí, anular'
             });
-            if (result.isConfirmed) {
-                const response = await putData('compras', id, { estado: 'Anulada' });
-                if (response) {
+            if (resultado.isConfirmed) {
+                const respuesta = await actualizarDatos('compras', id, { estado: 'Anulada' });
+                if (respuesta) {
                     Swal.fire('Anulada', 'La compra ha sido anulada', 'success');
-                    loadCompras();
+                    cargarCompras();
                 }
             }
         }
@@ -690,31 +813,32 @@
                 direccion: document.getElementById('direccionProveedor').value
             };
             const id = document.getElementById('proveedorId').value;
-            let result;
+            let resultado;
             if (id) {
-                result = await putData('proveedores', id, proveedor);
+                resultado = await actualizarDatos('proveedores', id, proveedor);
             } else {
-                result = await postData('proveedores', proveedor);
+                resultado = await enviarDatos('proveedores', proveedor);
             }
-            if (result) {
+            if (resultado) {
                 Swal.fire('Éxito', 'Proveedor guardado correctamente', 'success');
                 bootstrap.Modal.getInstance(document.getElementById('modalProveedor')).hide();
-                loadProveedores();
+                cargarProveedores();
             }
         }
 
         async function editarProveedor(id) {
-            const proveedor = await fetchData(`proveedores/${id}`);
+            const proveedor = await obtenerDatos(`proveedores/${id}`);
+            if (!proveedor) return;
             document.getElementById('proveedorId').value = proveedor._id;
             document.getElementById('nombreProveedor').value = proveedor.nombre;
             document.getElementById('emailProveedor').value = proveedor.email;
             document.getElementById('telefonoProveedor').value = proveedor.telefono;
             document.getElementById('direccionProveedor').value = proveedor.direccion;
-            showModal('proveedor');
+            mostrarModal('proveedor');
         }
 
         async function eliminarProveedor(id) {
-            const result = await Swal.fire({
+            const resultado = await Swal.fire({
                 title: '¿Estás seguro?',
                 text: "No podrás revertir esta acción",
                 icon: 'warning',
@@ -723,11 +847,11 @@
                 cancelButtonColor: '#d33',
                 confirmButtonText: 'Sí, eliminar'
             });
-            if (result.isConfirmed) {
-                const response = await deleteData('proveedores', id);
-                if (response) {
+            if (resultado.isConfirmed) {
+                const respuesta = await eliminarDatos('proveedores', id);
+                if (respuesta) {
                     Swal.fire('Eliminado', 'El proveedor ha sido eliminado', 'success');
-                    loadProveedores();
+                    cargarProveedores();
                 }
             }
         }
@@ -742,32 +866,33 @@
                 direccion: document.getElementById('direccionCliente').value
             };
             const id = document.getElementById('clienteId').value;
-            let result;
+            let resultado;
             if (id) {
-                result = await putData('clientes', id, cliente);
+                resultado = await actualizarDatos('clientes', id, cliente);
             } else {
-                result = await postData('clientes', cliente);
+                resultado = await enviarDatos('clientes', cliente);
             }
-            if (result) {
+            if (resultado) {
                 Swal.fire('Éxito', 'Cliente guardado correctamente', 'success');
                 bootstrap.Modal.getInstance(document.getElementById('modalCliente')).hide();
-                loadClientes();
+                cargarClientes();
             }
         }
 
         async function editarCliente(id) {
-            const cliente = await fetchData(`clientes/${id}`);
+            const cliente = await obtenerDatos(`clientes/${id}`);
+            if (!cliente) return;
             document.getElementById('clienteId').value = cliente._id;
             document.getElementById('nombreCliente').value = cliente.nombreCliente;
             document.getElementById('cedulaCliente').value = cliente.cedula;
             document.getElementById('emailCliente').value = cliente.email;
             document.getElementById('telefonoCliente').value = cliente.telefono;
             document.getElementById('direccionCliente').value = cliente.direccion;
-            showModal('cliente');
+            mostrarModal('cliente');
         }
 
         async function eliminarCliente(id) {
-            const result = await Swal.fire({
+            const resultado = await Swal.fire({
                 title: '¿Estás seguro?',
                 text: "No podrás revertir esta acción",
                 icon: 'warning',
@@ -776,27 +901,32 @@
                 cancelButtonColor: '#d33',
                 confirmButtonText: 'Sí, eliminar'
             });
-            if (result.isConfirmed) {
-                const response = await deleteData('clientes', id);
-                if (response) {
+            if (resultado.isConfirmed) {
+                const respuesta = await eliminarDatos('clientes', id);
+                if (respuesta) {
                     Swal.fire('Eliminado', 'El cliente ha sido eliminado', 'success');
-                    loadClientes();
+                    cargarClientes();
                 }
             }
         }
 
         // Inicialización
         document.addEventListener('DOMContentLoaded', () => {
-            loadData();
-            // Configurar buscadores
+            cargarDatos();
+            cargarProveedoresSelect();
+
+            // Configurar búsqueda para cada sección
             ['Producto', 'Compra', 'Proveedor', 'Cliente'].forEach(tipo => {
-                document.getElementById(`buscar${tipo}`).addEventListener('input', (e) => {
-                    const searchTerm = e.target.value.toLowerCase();
-                    const rows = document.querySelectorAll(`#tabla${tipo}s tbody tr`);
-                    rows.forEach(row => {
-                        const text = row.textContent.toLowerCase();
-                        row.style.display = text.includes(searchTerm) ? '' : 'none';
-                    });
+                const input = document.getElementById(`buscar${tipo}`);
+                input.addEventListener('input', (e) => {
+                    const busqueda = e.target.value.toLowerCase();
+                    const tabla = document.getElementById(`tabla${tipo}s`);
+                    const filas = tabla.getElementsByTagName('tr');
+                    for (let i = 1; i < filas.length; i++) {
+                        const fila = filas[i];
+                        const texto = fila.textContent.toLowerCase();
+                        fila.style.display = texto.includes(busqueda) ? '' : 'none';
+                    }
                 });
             });
         });
