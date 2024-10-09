@@ -22,10 +22,8 @@ exports.crearCompra = async (req, res) => {
       subtotal,
       iva: ivaTotal,
       total,
-      fecha: new Date(),
-      estado: 'Pendiente'
+      detalles: []
     });
-    await nuevaCompra.save();
 
     // Crear los detalles de la compra y actualizar el stock de los productos
     for (let detalle of detalles) {
@@ -38,13 +36,12 @@ exports.crearCompra = async (req, res) => {
       });
       await nuevoDetalle.save();
 
+      nuevaCompra.detalles.push(nuevoDetalle._id);
+
       // Actualizar el stock del producto
       await Producto.findByIdAndUpdate(detalle.producto, {
         $inc: { stock: detalle.cantidad }
       });
-
-      // Agregar el detalle a la compra
-      nuevaCompra.detalles.push(nuevoDetalle._id);
     }
 
     await nuevaCompra.save();
@@ -57,13 +54,17 @@ exports.crearCompra = async (req, res) => {
 
 exports.obtenerCompras = async (req, res) => {
   try {
-    const compras = await Compra.find().populate('proveedor');
+    const compras = await Compra.find()
+      .populate('proveedor')
+      .populate({
+        path: 'detalles',
+        populate: { path: 'producto' }
+      });
     res.json(compras);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
-
 exports.obtenerCompra = async (req, res) => {
   try {
     const compra = await Compra.findById(req.params.id)
@@ -72,21 +73,9 @@ exports.obtenerCompra = async (req, res) => {
         path: 'detalles',
         populate: { path: 'producto' }
       });
-    
     if (!compra) return res.status(404).json({ message: 'Compra no encontrada' });
     
-    res.json({
-      compra: {
-        _id: compra._id,
-        fecha: compra.fecha,
-        proveedor: compra.proveedor,
-        estado: compra.estado,
-        subtotal: compra.subtotal,
-        iva: compra.iva,
-        total: compra.total
-      },
-      detalles: compra.detalles
-    });
+    res.json(compra);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

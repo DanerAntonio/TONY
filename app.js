@@ -17,14 +17,8 @@ app.use(cors({
 // Middleware
 app.use(express.json());
 
-app.use((req, res, next) => {
-  res.setHeader('X-Content-Type-Options', 'nosniff');
-  res.removeHeader('X-Powered-By');
-  next();
-});
-
 // Conexión a la base de datos
-mongoose.connect(process.env.MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true })
+mongoose.connect(process.env.MONGODB_URI)
   .then(() => console.log('Conectado a MongoDB'))
   .catch(err => console.error('Error de conexión a MongoDB:', err));
 
@@ -37,9 +31,17 @@ app.use('/api/clientes', require('./routes/clienteRoutes'));
 
 // Manejo de errores
 app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).send('Algo salió mal!');
+  console.error('Error:', err);
+  res.status(500).send({
+    error: 'Algo salió mal!',
+    message: err.message,
+    stack: err.stack
+  });
 });
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Servidor corriendo en el puerto ${PORT}`));
+
+
+
+

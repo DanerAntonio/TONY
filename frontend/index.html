@@ -306,13 +306,13 @@
                         <div class="mb-3">
                             <label for="telefonoCliente" class="form-label">Teléfono</label>
                             <input type="tel" class="form-control" id="telefonoCliente" required>
-                        
                         </div>
                         <div class="mb-3">
                             <label for="direccionCliente" class="form-label">Dirección</label>
                             <input type="text" class="form-control" id="direccionCliente" required>
                         </div>
                     </form>
+                
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
@@ -325,7 +325,7 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.0.19/dist/sweetalert2.all.min.js"></script>
     <script>
-        const API_URL = 'https://tony-m6cg.onrender.com/api';
+   const API_URL = 'https://tony-m6cg.onrender.com/api';
         let seccionActual = 'productos';
         const elementosPorPagina = 10;
         let paginaActual = 1;
@@ -369,7 +369,8 @@
                     body: JSON.stringify(datos)
                 });
                 if (!respuesta.ok) {
-                    throw new Error(`Error HTTP! estado: ${respuesta.status}`);
+                    const textoError = await respuesta.text();
+                    throw new Error(`Error HTTP! estado: ${respuesta.status}, mensaje: ${textoError}`);
                 }
                 return await respuesta.json();
             } catch (error) {
@@ -457,25 +458,37 @@
         }
 
         async function cargarCompras() {
-            const compras = await obtenerDatos('compras');
-            if (!compras) return;
-            console.log('Datos de compras cargados:', compras); // Log para depuración
-            const tabla = document.getElementById('tablaCompras').getElementsByTagName('tbody')[0];
-            tabla.innerHTML = '';
-            compras.forEach(compra => {
-                const fila = tabla.insertRow();
-                fila.innerHTML = `
-                    <td>${compra._id}</td>
-                    <td>${new Date(compra.fecha).toLocaleString()}</td>
-                    <td>${compra.proveedor ? compra.proveedor.nombre : 'N/A'}</td>
-                    <td>$${compra.total.toFixed(2)}</td>
-                    <td>${compra.estado}</td>
-                    <td>
-                        <button class="btn btn-sm btn-info" onclick="verDetalleCompra('${compra._id}')">Ver Detalle</button>
-                        <button class="btn btn-sm btn-warning" onclick="anularCompra('${compra._id}')" ${compra.estado === 'Anulada' ? 'disabled' : ''}>Anular</button>
-                    </td>
-                `;
-            });
+            try {
+                console.log('Iniciando carga de compras');
+                const compras = await obtenerDatos('compras');
+                console.log('Compras obtenidas:', compras);
+                if (!compras || !Array.isArray(compras)) {
+                    console.error('No se obtuvieron compras o el formato es incorrecto');
+                    Swal.fire('Error', 'No se pudieron cargar las compras', 'error');
+                    return;
+                }
+                const tabla = document.getElementById('tablaCompras').getElementsByTagName('tbody')[0];
+                tabla.innerHTML = '';
+                compras.forEach(compra => {
+                    const fila = tabla.insertRow();
+                    fila.innerHTML = `
+                        <td>${compra._id}</td>
+                        <td>${new Date(compra.fecha).toLocaleString()}</td>
+                        <td>${compra.proveedor ? compra.proveedor.nombre : 'N/A'}</td>
+                        <td>$${compra.total.toFixed(2)}</td>
+                        <td>${compra.estado}</td>
+                        <td>
+                            <button class="btn btn-sm btn-info" onclick="verDetalleCompra('${compra._id}')">Ver Detalle</button>
+                            <button class="btn btn-sm btn-warning" onclick="anularCompra('${compra._id}')" ${compra.estado === 'Anulada' ? 'disabled' : ''}>Anular</button>
+                        </td>
+                    `;
+                });
+                console.log('Carga de compras completada');
+                crearPaginacion(compras.length, 'paginacionCompras');
+            } catch (error) {
+                console.error('Error al cargar compras:', error);
+                Swal.fire('Error', `No se pudieron cargar las compras: ${error.message}`, 'error');
+            }
         }
 
         async function cargarProveedores() {
@@ -604,65 +617,35 @@
                 html:
                     '<select id="swal-producto" class="swal2-select">' +
                     '<option value="">Seleccione un producto</option>' +
-                    '<option value="nuevo">Crear nuevo producto</option>' +
                     productos.map(p => `<option value="${p._id}">${p.nombre}</option>`).join('') +
                     '</select>' +
-                    '<input id="swal-nombre" class="swal2-input" placeholder="Nombre del producto" type="text" style="display:none;">' +
                     '<input id="swal-cantidad" class="swal2-input" placeholder="Cantidad" type="number">' +
                     '<input id="swal-precio" class="swal2-input" placeholder="Precio Unitario" type="number" step="0.01">',
                 focusConfirm: false,
-                didOpen: () => {
-                    const select = document.getElementById('swal-producto');
-                    const nombreInput = document.getElementById('swal-nombre');
-                    select.addEventListener('change', (e) => {
-                        if (e.target.value === 'nuevo') {
-                            nombreInput.style.display = 'block';
-                        } else {
-                            nombreInput.style.display = 'none';
-                        }
-                    });
-                },
                 preConfirm: () => {
-                    const productoSelect = document.getElementById('swal-producto');
                     return {
-                        producto: productoSelect.value,
-                        nombre: document.getElementById('swal-nombre').value,
+                        producto: document.getElementById('swal-producto').value,
                         cantidad: document.getElementById('swal-cantidad').value,
-                        precioUnitario: document.getElementById('swal-precio').value
+                        precio: document.getElementById('swal-precio').value
                     }
                 }
             });
 
             if (formValues) {
-                if (formValues.producto === 'nuevo') {
-                    if (!formValues.nombre) {
-                        Swal.fire('Error', 'Debe ingresar un nombre para el nuevo producto', 'error');
-                        return;
-                    }
-                    // Crear nuevo producto
-                    const nuevoProducto = await enviarDatos('productos', {
-                        nombre: formValues.nombre,
-                        precio: parseFloat(formValues.precioUnitario),
-                        stock: parseInt(formValues.cantidad)
+                const producto = productos.find(p => p._id === formValues.producto);
+                if (producto) {
+                    productosCompra.push({
+                        producto: producto._id,
+                        nombre: producto.nombre,
+                        cantidad: parseInt(formValues.cantidad),
+                        precioUnitario: parseFloat(formValues.precio)
                     });
-                    if (nuevoProducto) {
-                        formValues.producto = nuevoProducto._id;
-                    } else {
-                        return;
-                    }
+                    actualizarTablaProductosCompra();
+                    calcularTotalesCompra();
                 }
-
-                const productoSeleccionado = productos.find(p => p._id === formValues.producto) || { nombre: formValues.nombre };
-                productosCompra.push({
-                    producto: formValues.producto,
-                    nombre: productoSeleccionado.nombre,
-                    cantidad: parseInt(formValues.cantidad),
-                    precioUnitario: parseFloat(formValues.precioUnitario)
-                });
-                actualizarTablaProductosCompra();
             }
         }
-
+        
         function actualizarTablaProductosCompra() {
             const contenedor = document.getElementById('productosCompra');
             contenedor.innerHTML = `
@@ -683,18 +666,20 @@
                                 <td>${p.cantidad}</td>
                                 <td>$${p.precioUnitario.toFixed(2)}</td>
                                 <td>$${(p.cantidad * p.precioUnitario).toFixed(2)}</td>
-                                <td><button class="btn btn-sm btn-danger" onclick="eliminarProductoCompra(${index})">Eliminar</button></td>
+                                <td>
+                                    <button class="btn btn-sm btn-danger" onclick="eliminarProductoCompra(${index})">Eliminar</button>
+                                </td>
                             </tr>
                         `).join('')}
                     </tbody>
                 </table>
             `;
-            calcularTotalesCompra();
         }
 
         function eliminarProductoCompra(index) {
             productosCompra.splice(index, 1);
             actualizarTablaProductosCompra();
+            calcularTotalesCompra();
         }
 
         function calcularTotalesCompra() {
@@ -718,22 +703,16 @@
                 return;
             }
 
-            const subtotal = productosCompra.reduce((total, p) => total + p.cantidad * p.precioUnitario, 0);
-            const iva = subtotal * IVA;
-            const total = subtotal + iva;
+            const subtotal = parseFloat(document.getElementById('subtotalCompra').textContent);
+            const iva = parseFloat(document.getElementById('ivaCompra').textContent);
+            const total = parseFloat(document.getElementById('totalCompra').textContent);
 
             const compra = {
                 proveedor,
-                fecha: new Date().toISOString(),
-                detalles: productosCompra.map(p => ({
-                    producto: p.producto,
-                    cantidad: p.cantidad,
-                    precioUnitario: p.precioUnitario
-                })),
+                productos: productosCompra,
                 subtotal,
                 iva,
-                total,
-                estado: 'Pendiente'
+                total
             };
 
             const resultado = await enviarDatos('compras', compra);
@@ -745,79 +724,50 @@
             }
         }
 
-
-
         async function verDetalleCompra(id) {
-    try {
-        const respuesta = await obtenerDatos(`compras/${id}`);
-        console.log('Datos de la compra:', respuesta);
+            const compra = await obtenerDatos(`compras/${id}`);
+            if (!compra) return;
 
-        if (!respuesta || !respuesta.compra) {
-            throw new Error('No se pudo cargar los detalles de la compra');
+            let detalleHTML = `
+                <h3>Detalle de Compra</h3>
+                <p><strong>ID:</strong> ${compra._id}</p>
+                <p><strong>Fecha:</strong> ${new Date(compra.fecha).toLocaleString()}</p>
+                <p><strong>Proveedor:</strong> ${compra.proveedor ? compra.proveedor.nombre : 'N/A'}</p>
+                <p><strong>Estado:</strong> ${compra.estado}</p>
+                <h4>Productos:</h4>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Producto</th>
+                            <th>Cantidad</th>
+                            <th>Precio Unitario</th>
+                            <th>Subtotal</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${compra.productos.map(p => `
+                            <tr>
+                                <td>${p.producto ? p.producto.nombre : 'N/A'}</td>
+                                <td>${p.cantidad}</td>
+                                <td>$${p.precioUnitario.toFixed(2)}</td>
+                                <td>$${(p.cantidad * p.precioUnitario).toFixed(2)}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+                <p><strong>Subtotal:</strong> $${compra.subtotal.toFixed(2)}</p>
+                <p><strong>IVA:</strong> $${compra.iva.toFixed(2)}</p>
+                <p><strong>Total:</strong> $${compra.total.toFixed(2)}</p>
+            `;
+
+            Swal.fire({
+                title: 'Detalle de Compra',
+                html: detalleHTML,
+                width: '80%',
+                confirmButtonText: 'Cerrar'
+            });
         }
 
-        const compra = respuesta.compra;
-        const detalles = respuesta.detalles || [];
-
-        const formatearPrecio = (precio) => {
-            return precio != null && !isNaN(precio) ? `$${parseFloat(precio).toFixed(2)}` : 'No disponible';
-        };
-
-        const formatearFecha = (fecha) => {
-            return fecha ? new Date(fecha).toLocaleString() : 'No disponible';
-        };
-
-        // Calcular subtotal
-        let subtotal = detalles.reduce((total, d) => total + (d.cantidad * d.precioUnitario), 0);
-        
-        // Calcular IVA (asumiendo 12%)
-        let iva = subtotal * 0.12;
-        
-        // Calcular total
-        let total = subtotal + iva;
-
-        let detalleHTML = `
-            <h3>Compra #${compra._id || 'No disponible'}</h3>
-            <p><strong>Fecha:</strong> ${formatearFecha(compra.fecha)}</p>
-            <p><strong>Proveedor:</strong> ${compra.proveedor ? compra.proveedor.nombre : 'No disponible'}</p>
-            <p><strong>Estado:</strong> ${compra.estado || 'No disponible'}</p>
-            <h4>Productos:</h4>
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th>Producto</th>
-                        <th>Cantidad</th>
-                        <th>Precio Unitario</th>
-                        <th>Subtotal</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    ${detalles.length > 0 ? detalles.map(d => `
-                        <tr>
-                            <td>${d.producto ? d.producto.nombre : 'No disponible'}</td>
-                            <td>${d.cantidad || 'No disponible'}</td>
-                            <td>${formatearPrecio(d.precioUnitario)}</td>
-                            <td>${formatearPrecio(d.cantidad * d.precioUnitario)}</td>
-                        </tr>
-                    `).join('') : '<tr><td colspan="4">No hay detalles disponibles</td></tr>'}
-                </tbody>
-            </table>
-            <p><strong>Subtotal:</strong> ${formatearPrecio(subtotal)}</p>
-            <p><strong>IVA (12%):</strong> ${formatearPrecio(iva)}</p>
-            <p><strong>Total:</strong> ${formatearPrecio(total)}</p>
-        `;
-
-        Swal.fire({
-            title: 'Detalle de Compra',
-            html: detalleHTML,
-            width: '80%',
-            confirmButtonText: 'Cerrar'
-        });
-    } catch (error) {
-        console.error('Error al cargar los detalles de la compra:', error);
-        Swal.fire('Error', 'No se pudo cargar los detalles de la compra', 'error');
-    }
-}
         async function anularCompra(id) {
             const resultado = await Swal.fire({
                 title: '¿Estás seguro?',
@@ -947,21 +897,6 @@
         document.addEventListener('DOMContentLoaded', () => {
             cargarDatos();
             cargarProveedoresSelect();
-
-            // Configurar búsqueda para cada sección
-            ['Producto', 'Compra', 'Proveedor', 'Cliente'].forEach(tipo => {
-                const input = document.getElementById(`buscar${tipo}`);
-                input.addEventListener('input', (e) => {
-                    const busqueda = e.target.value.toLowerCase();
-                    const tabla = document.getElementById(`tabla${tipo}s`);
-                    const filas = tabla.getElementsByTagName('tr');
-                    for (let i = 1; i < filas.length; i++) {
-                        const fila = filas[i];
-                        const texto = fila.textContent.toLowerCase();
-                        fila.style.display = texto.includes(busqueda) ? '' : 'none';
-                    }
-                });
-            });
         });
     </script>
 </body>
